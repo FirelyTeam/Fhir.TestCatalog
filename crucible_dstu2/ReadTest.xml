@@ -1,0 +1,101 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="ReadTest">
+    <title:ReadTest/>
+    <starting-test>ReadTest:base_test</starting-test>
+  </suite>
+  <test name="ReadTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>ReadTest::r001_result_headers_on_normal_read._test</call-test>
+      <call-test>ReadTest::r002_read_unknown_resource_type._test</call-test>
+      <call-test>ReadTest::r003_read_non-existing_resource_id._test</call-test>
+      <call-test>ReadTest::r004_read_invalid_format_resource_id_test</call-test>
+    </code>
+  </test>
+  <test name="ReadTest::r001_result_headers_on_normal_read._test" id="R001">
+    <code>@patient = ReadTest.createPatient('Emerald', 'Caro')
+        reply = @client.create(@patient)
+        @id = reply.id
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#read'
+          requires resource: "Patient", methods: ["create", "read", "delete"]
+          validates resource: "Patient", methods: ["read"]
+        }
+
+        reply = @client.read(FHIR::Patient, @id)
+        assert_response_ok(reply)
+        assert_equal @id, reply.id, 'Server returned wrong patient.'
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @id)</code>
+    <context>Result headers on normal read.</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#read</link>
+    <assertion>Validates the READ methods on Patient
+Requires the CREATE,READ,DELETE methods on Patient
+Asserts False: Server returned wrong patient.</assertion>
+  </test>
+  <test name="ReadTest::r002_read_unknown_resource_type._test" id="R002">
+    <code>@patient = ReadTest.createPatient('Emerald', 'Caro')
+        reply = @client.create(@patient)
+        @id = reply.id
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#read'
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#update'
+        }
+
+        reply = @client.read(Crucible::Tests::ReadTest, @id)
+        assert_response_not_found(reply)
+ 
+        @client.destroy(FHIR::Patient, @id)</code>
+    <context>Read unknown resource type.</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#read</link>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#update</link>
+    <assertion></assertion>
+  </test>
+  <test name="ReadTest::r003_read_non-existing_resource_id._test" id="R003">
+    <code>@patient = ReadTest.createPatient('Emerald', 'Caro')
+        reply = @client.create(@patient)
+        @id = reply.id
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#read'
+          requires resource: "Patient", methods: ["create", "read", "delete"]
+          validates resource: "Patient", methods: ["read"]
+        }
+
+        reply = @client.read(FHIR::Patient, 'Supercalifragilisticexpialidocious')
+        assert_response_not_found(reply)
+ 
+        @client.destroy(FHIR::Patient, @id)</code>
+    <context>Read non-existing resource id.</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#read</link>
+    <assertion>Validates the READ methods on Patient
+Requires the CREATE,READ,DELETE methods on Patient</assertion>
+  </test>
+  <test name="ReadTest::r004_read_invalid_format_resource_id_test" id="R004">
+    <code>@patient = ReadTest.createPatient('Emerald', 'Caro')
+        reply = @client.create(@patient)
+        @id = reply.id
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#read'
+          links 'http://hl7.org/implement/standards/FHIR-Develop/datatypes.html#id'
+          requires resource: "Patient", methods: ["create", "read", "delete"]
+          validates resource: "Patient", methods: ["read"]
+        }
+
+        reply = @client.read(FHIR::Patient, 'Invalid-ID-Because_Of_!@$Special_Characters_and_Length_Over_Sixty_Four_Characters')
+        assert_response_bad(reply)
+ 
+        @client.destroy(FHIR::Patient, @id)</code>
+    <context>Read invalid format resource id</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#read</link>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/datatypes.html#id</link>
+    <assertion>Validates the READ methods on Patient
+Requires the CREATE,READ,DELETE methods on Patient</assertion>
+  </test>
+</xs:schema>

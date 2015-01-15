@@ -1,0 +1,72 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="PatientTransferTest">
+    <title:PatientTransferTest/>
+    <starting-test>PatientTransferTest:base_test</starting-test>
+  </suite>
+  <test name="PatientTransferTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>PatientTransferTest::i01_transfer_patient_between_servers_without_id_test</call-test>
+      <call-test>PatientTransferTest::i02_transfer_patient_between_servers_with_id_test</call-test>
+    </code>
+  </test>
+  <test name="PatientTransferTest::i01_transfer_patient_between_servers_without_id_test" id="I01">
+    <code># need to extract data here before you run the test
+        @resources = Crucible::Generator::Resources.new
+
+
+         metadata {
+          links 'http://www.hl7.org/implement/standards/fhir/http.html#read'
+          links 'http://www.hl7.org/implement/standards/fhir/http.html#create'
+          requires resource: "Patient", methods: ["create", "read"]
+          validates resource: "Patient", methods: ["create", "read"]
+        }
+
+        @patient = @resources.example_patient
+
+        client1_patient = create_and_read_patient(@patient, @client)
+
+        # clear the ID, there is a separate test to test preserved ids
+        client1_id = client1_patient.xmlId
+        client1_patient.xmlId = nil
+
+        client2_patient = create_and_read_patient(client1_patient, @client2)
+
+        mismatch = client1_patient.mismatch client2_patient, ['_id', 'xmlId', 'versionId', 'div', 'lastUpdated']
+        assert mismatch.empty?, "The transfered patient did not match the original for the following fields: #{mismatch}"
+
+        mismatch = client1_patient.mismatch client2_patient, ['_id', 'xmlId', 'versionId']
+        warning {assert mismatch.empty?, "The transfered patient did not match the original in the narrative section"}</code>
+    <context>Transfer Patient between servers without id</context>
+    <link>http://www.hl7.org/implement/standards/fhir/http.html#read</link>
+    <link>http://www.hl7.org/implement/standards/fhir/http.html#create</link>
+    <assertion>Validates the CREATE,READ methods on Patient
+Requires the CREATE,READ methods on Patient
+Asserts False: The transfered patient did not match the original for the following fields: #{mismatch}
+Asserts False: The transfered patient did not match the original in the narrative section</assertion>
+  </test>
+  <test name="PatientTransferTest::i02_transfer_patient_between_servers_with_id_test" id="I02">
+    <code># need to extract data here before you run the test
+        @resources = Crucible::Generator::Resources.new
+
+
+         metadata {
+          links 'http://www.hl7.org/implement/standards/fhir/http.html#read'
+          links 'http://www.hl7.org/implement/standards/fhir/http.html#create'
+          requires resource: "Patient", methods: ["create", "read"]
+          validates resource: "Patient", methods: ["create", "read"]
+        }
+
+        @patient = @resources.example_patient
+
+        client1_patient = create_and_read_patient(@patient, @client)
+        client2_patient = create_and_read_patient(client1_patient, @client2)
+        assert client1_patient.xmlId == client2_patient.xmlId, "could not transfer the patient maintaining the ID"</code>
+    <context>Transfer Patient between servers with id</context>
+    <link>http://www.hl7.org/implement/standards/fhir/http.html#read</link>
+    <link>http://www.hl7.org/implement/standards/fhir/http.html#create</link>
+    <assertion>Validates the CREATE,READ methods on Patient
+Requires the CREATE,READ methods on Patient
+Asserts False: could not transfer the patient maintaining the ID</assertion>
+  </test>
+</xs:schema>

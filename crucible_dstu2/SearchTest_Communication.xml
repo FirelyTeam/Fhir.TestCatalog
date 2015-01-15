@@ -1,0 +1,164 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="SearchTest_Communication">
+    <title>SearchTest_Communication</title>
+    <starting-test>SearchTest_Communication:base_test</starting-test>
+  </suite>
+  <test name="SearchTest_Communication::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>SearchTest_Communication::s000_compare_supported_search_parameters_with_specification_test</call-test>
+      <call-test>SearchTest_Communication::s001_search_by_id_test</call-test>
+      <call-test>SearchTest_Communication::s002_search_without_search_keyword_test</call-test>
+      <call-test>SearchTest_Communication::s003_search_limit_by__count_test</call-test>
+      <call-test>SearchTest_Communication::se01_search_without_criteria_test</call-test>
+    </code>
+  </test>
+  <test name="SearchTest_Communication::s000_compare_supported_search_parameters_with_specification_test" id="S000_Communication">
+    <code>if @conformance.nil?
+          @conformance = @client.conformanceStatement
+        end
+
+        @canSearchById = false
+
+        @conformance.rest.each do |rest|
+          rest.resource.each do |resource|
+            @searchParams = resource.searchParam if(resource.fhirType.downcase == "#{@resource_class.name.demodulize.downcase}" )
+          end
+        end
+
+        index = @searchParams.find_index {|item| item.name=="_id" } if !@searchParams.nil?
+        @canSearchById = !index.nil?
+
+         searchParamNames = []
+        searchParamNames = @searchParams.map { |item| item.name } if !@searchParams.nil?
+        assert_equal 0, (@resource_class::SEARCH_PARAMS - searchParamNames).size, 'The server does not support searching all the parameters specified by the specification.' , (@resource_class::SEARCH_PARAMS - searchParamNames).join(', ')</code>
+    <context>Compare supported search parameters with specification Communication</context>
+    <assertion>Asserts False: The server does not support searching all the parameters specified by the specification.</assertion>
+  </test>
+  <test name="SearchTest_Communication::s001_search_by_id_test" id="S001_Communication">
+    <code>if @conformance.nil?
+          @conformance = @client.conformanceStatement
+        end
+
+        @canSearchById = false
+
+        @conformance.rest.each do |rest|
+          rest.resource.each do |resource|
+            @searchParams = resource.searchParam if(resource.fhirType.downcase == "#{@resource_class.name.demodulize.downcase}" )
+          end
+        end
+
+        index = @searchParams.find_index {|item| item.name=="_id" } if !@searchParams.nil?
+        @canSearchById = !index.nil?
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '_id' =&gt; '0'
+            }
+          }
+        }
+        reply = @client.search(@resource_class, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)</code>
+    <context>Search by ID Communication</context>
+    <assertion></assertion>
+  </test>
+  <test name="SearchTest_Communication::s002_search_without_search_keyword_test" id="S002_Communication">
+    <code>if @conformance.nil?
+          @conformance = @client.conformanceStatement
+        end
+
+        @canSearchById = false
+
+        @conformance.rest.each do |rest|
+          rest.resource.each do |resource|
+            @searchParams = resource.searchParam if(resource.fhirType.downcase == "#{@resource_class.name.demodulize.downcase}" )
+          end
+        end
+
+        index = @searchParams.find_index {|item| item.name=="_id" } if !@searchParams.nil?
+        @canSearchById = !index.nil?
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; false,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '_id' =&gt; '0'
+            }
+          }
+        }
+        reply = @client.search(@resource_class, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)</code>
+    <context>Search without search keyword Communication</context>
+    <assertion></assertion>
+  </test>
+  <test name="SearchTest_Communication::s003_search_limit_by__count_test" id="S003_Communication">
+    <code>if @conformance.nil?
+          @conformance = @client.conformanceStatement
+        end
+
+        @canSearchById = false
+
+        @conformance.rest.each do |rest|
+          rest.resource.each do |resource|
+            @searchParams = resource.searchParam if(resource.fhirType.downcase == "#{@resource_class.name.demodulize.downcase}" )
+          end
+        end
+
+        index = @searchParams.find_index {|item| item.name=="_id" } if !@searchParams.nil?
+        @canSearchById = !index.nil?
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '_count' =&gt; '1'
+            }
+          }
+        }
+        reply = @client.search(@resource_class, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert (1 &gt;= reply.resource.entry.size), 'The server did not return the correct number of results.'</code>
+    <context>Search limit by _count Communication</context>
+    <assertion>Asserts False: The server did not return the correct number of results.</assertion>
+  </test>
+  <test name="SearchTest_Communication::se01_search_without_criteria_test" id="SE01_Communication">
+    <code>if @conformance.nil?
+          @conformance = @client.conformanceStatement
+        end
+
+        @canSearchById = false
+
+        @conformance.rest.each do |rest|
+          rest.resource.each do |resource|
+            @searchParams = resource.searchParam if(resource.fhirType.downcase == "#{@resource_class.name.demodulize.downcase}" )
+          end
+        end
+
+        index = @searchParams.find_index {|item| item.name=="_id" } if !@searchParams.nil?
+        @canSearchById = !index.nil?
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; nil
+          }
+        }
+        reply = @client.search(@resource_class, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+
+        replyB = @client.read_feed(@resource_class)
+        assert_equal replyB.resource.total, reply.resource.total, 'Searching without criteria did not return all the results.'</code>
+    <context>Search without criteria Communication</context>
+    <assertion>Asserts False: Searching without criteria did not return all the results.</assertion>
+  </test>
+</xs:schema>

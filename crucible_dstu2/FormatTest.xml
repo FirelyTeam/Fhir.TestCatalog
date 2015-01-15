@@ -1,0 +1,245 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="FormatTest">
+    <title:FormatTest/>
+    <starting-test>FormatTest:base_test</starting-test>
+  </suite>
+  <test name="FormatTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>FormatTest::ct01_request_xml_using_headers_test</call-test>
+      <call-test>FormatTest::ct02_request_xml_using_[_format]_test</call-test>
+      <call-test>FormatTest::ct03_request_json_using_headers_test</call-test>
+      <call-test>FormatTest::ct04_request_json_using_[_format]_test</call-test>
+      <call-test>FormatTest::ft01_request_xml_and_json_using_headers_test</call-test>
+      <call-test>FormatTest::ft02_request_xml_and_json_using_[_format]_test</call-test>
+      <call-test>FormatTest::ft03_request_xml_feed_using_headers_test</call-test>
+      <call-test>FormatTest::ft04_request_xml_feed_using_[_format]_test</call-test>
+      <call-test>FormatTest::ft05_request_json_feed_using_headers_test</call-test>
+      <call-test>FormatTest::ft06_request_json_feed_using_[_format]_test</call-test>
+    </code>
+  </test>
+  <test name="FormatTest::ct01_request_xml_using_headers_test" id="CT01">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_XML)
+          assert compare_resource(patient), 'requested XML (headers) resource does not match created resource'
+        rescue
+          assert compare_resource(patient), 'requested XML (headers) resource could not be parsed'
+        end</code>
+    <context>Request xml using headers</context>
+    <assertion>Asserts False: requested XML (headers) resource does not match created resource
+Asserts False: requested XML (headers) resource could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ct02_request_xml_using_[_format]_test" id="CT02">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_XML, true)
+          assert compare_resource(patient), 'requested XML (_format) resource does not match created resource'
+        rescue
+          @client.use_format_param = false
+          assert compare_resource(patient), 'requested XML (_format) resource could not be parsed'
+        end</code>
+    <context>Request xml using [_format]</context>
+    <assertion>Asserts False: requested XML (_format) resource does not match created resource
+Asserts False: requested XML (_format) resource could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ct03_request_json_using_headers_test" id="CT03">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_JSON)
+          assert compare_resource(patient), 'requested JSON (headers) resource does not match created resource'
+        rescue
+          assert compare_resource(patient), 'requested JSON (headers) resource could not be parsed'
+        end</code>
+    <context>Request json using headers</context>
+    <assertion>Asserts False: requested JSON (headers) resource does not match created resource
+Asserts False: requested JSON (headers) resource could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ct04_request_json_using_[_format]_test" id="CT04">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_JSON, true)
+          assert compare_resource(patient), 'requested JSON (_format) resource does not match created resource'
+        rescue
+          @client.use_format_param = false
+          assert compare_resource(patient), 'requested JSON (_format) resource could not be parsed'
+        end</code>
+    <context>Request json using [_format]</context>
+    <assertion>Asserts False: requested JSON (_format) resource does not match created resource
+Asserts False: requested JSON (_format) resource could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ft01_request_xml_and_json_using_headers_test" id="FT01">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient_xml = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_XML)
+          patient_json = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_JSON)
+
+          assert compare_entries(patient_xml, patient_json), 'requested XML &amp; JSON (headers) resources do not match created resource or each other'
+        rescue
+          @client.use_format_param = false
+          assert compare_entries(patient_xml, patient_json), 'requested XML &amp; JSON (headers) resources could not be parsed'
+        end</code>
+    <context>Request xml and json using headers</context>
+    <assertion>Asserts False: requested XML &amp; JSON (headers) resources do not match created resource or each other
+Asserts False: requested XML &amp; JSON (headers) resources could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ft02_request_xml_and_json_using_[_format]_test" id="FT02">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patient_xml = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_XML, true)
+          patient_json = request_entry(FHIR::Patient, @id, FHIR::Formats::ResourceFormat::RESOURCE_JSON, true)
+
+          assert compare_entries(patient_xml, patient_json), 'requested XML &amp; JSON (_format) resources do not match created resource or each other'
+        rescue
+          @client.use_format_param = false
+          assert compare_entries(patient_xml, patient_json), 'requested XML &amp; JSON (_format) resources could not be parsed'
+        end</code>
+    <context>Request xml and json using [_format]</context>
+    <assertion>Asserts False: requested XML &amp; JSON (_format) resources do not match created resource or each other
+Asserts False: requested XML &amp; JSON (_format) resources could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ft03_request_xml_feed_using_headers_test" id="FT03">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patients_feed = request_feed(FHIR::Patient, FHIR::Formats::FeedFormat::FEED_XML)
+          bundle = patients_feed.resource
+          patient = bundle.get_by_id(@id)
+
+          # FIXME: Can we retrieve the patient from the Bundle?
+          assert !patients_feed.blank?, 'requested XML (headers) feed does not contain created resource'
+        rescue
+          assert !patients_feed.blank?, 'requested XML (headers) feed could not be parsed'
+        end</code>
+    <context>Request xml feed using headers</context>
+    <assertion>Asserts False: requested XML (headers) feed does not contain created resource
+Asserts False: requested XML (headers) feed could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ft04_request_xml_feed_using_[_format]_test" id="FT04">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         begin
+          patients_feed = request_feed(FHIR::Patient, FHIR::Formats::FeedFormat::FEED_XML, true)
+          bundle = patients_feed.resource
+          patient = bundle.get_by_id(@id)
+
+          # FIXME: Can we retrieve the patient from the Bundle?
+          assert !patients_feed.blank?, 'requested XML (_format) feed does not contain created resource'
+        rescue
+          assert !patients_feed.blank?, 'requested XML (_format) feed could not be parsed'
+        end</code>
+    <context>Request xml feed using [_format]</context>
+    <assertion>Asserts False: requested XML (_format) feed does not contain created resource
+Asserts False: requested XML (_format) feed could not be parsed</assertion>
+  </test>
+  <test name="FormatTest::ft05_request_json_feed_using_headers_test" id="FT05">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         skip</code>
+    <context>Request json feed using headers</context>
+    <assertion></assertion>
+  </test>
+  <test name="FormatTest::ft06_request_json_feed_using_[_format]_test" id="FT06">
+    <code>@resources ||= Crucible::Generator::Resources.new
+        @resource ||= @resources.example_patient
+
+        create_date ||= Time.now
+        result ||= @client.create(@resource)
+
+        assert !result.id.blank?, 'failed to create resource on server'
+
+        @id ||= result.id
+        @resource.id = @id
+
+         skip</code>
+    <context>Request json feed using [_format]</context>
+    <assertion></assertion>
+  </test>
+</xs:schema>

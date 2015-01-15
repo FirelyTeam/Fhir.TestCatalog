@@ -1,0 +1,1325 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="SprinklerSearchTest">
+    <title:SprinklerSearchTest/>
+    <starting-test>SprinklerSearchTest:base_test</starting-test>
+  </suite>
+  <test name="SprinklerSearchTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>SprinklerSearchTest::se01_search_patients_without_criteria_(except__count)_test</call-test>
+      <call-test>SprinklerSearchTest::se02_search_on_non-existing_resource_test</call-test>
+      <call-test>SprinklerSearchTest::se03_search_patient_resource_on_partial_family_surname_test</call-test>
+      <call-test>SprinklerSearchTest::se04_search_patient_resource_on_given_name_test</call-test>
+      <call-test>SprinklerSearchTest::se05.0_search_condition_by_subject_reference_url_test</call-test>
+      <call-test>SprinklerSearchTest::se05.1_search_condition_by_subject_reference_id_test</call-test>
+      <call-test>SprinklerSearchTest::se05.2_search_condition_by_subject:patient_reference_url_test</call-test>
+      <call-test>SprinklerSearchTest::se05.3_search_condition_by_subject:patient_reference_id_test</call-test>
+      <call-test>SprinklerSearchTest::se05.4_search_condition_by_subject:_id_reference_test</call-test>
+      <call-test>SprinklerSearchTest::se05.5_search_condition_by_subject:name_reference_test</call-test>
+      <call-test>SprinklerSearchTest::se05.6_search_condition_by_subject:identifier_reference_test</call-test>
+      <call-test>SprinklerSearchTest::se06_search_condition_by__include_test</call-test>
+      <call-test>SprinklerSearchTest::se21_search_for_quantity_(in_observation)_-_precision_tests_test</call-test>
+      <call-test>SprinklerSearchTest::se22_search_for_quantity_(in_observation)_-_operators_test</call-test>
+      <call-test>SprinklerSearchTest::se23_search_with_quantifier_:missing,_on_patient.gender_test</call-test>
+      <call-test>SprinklerSearchTest::se24_search_with_non-existing_parameter._test</call-test>
+      <call-test>SprinklerSearchTest::se25_search_with_malformed_parameters._test</call-test>
+    </code>
+  </test>
+  <test name="SprinklerSearchTest::se01_search_patients_without_criteria_(except__count)_test" id="SE01">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '_count' =&gt; '1'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.entry.size, 'The server did not return the correct number of results.'
+        warning { assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.' }
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search patients without criteria (except _count)</context>
+    <assertion>Asserts False: The server did not return the correct number of results.
+Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se02_search_on_non-existing_resource_test" id="SE02">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :resource =&gt; Crucible::Tests::SprinklerSearchTest,
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; nil
+          }
+        }
+        reply = @client.search_all(options)
+        assert_response_not_found(reply)
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search on non-existing resource</context>
+    <assertion></assertion>
+  </test>
+  <test name="SprinklerSearchTest::se03_search_patient_resource_on_partial_family_surname_test" id="SE03">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         search_string = @patient.name[0].family[0][0..2]
+        search_regex = Regexp.new(search_string)
+        # how many patients in the bundle have matching names?
+        expected = 0
+        @entries.each do |entry|
+          patient = entry.resource
+          isMatch = false
+          if !patient.nil? &amp;&amp; !patient.name.nil?
+            patient.name.each do |name|
+              if !name.family.nil?
+                name.family.each do |family|
+                  if !(family =~ search_regex).nil?
+                    isMatch = true
+                  end
+                end
+              end
+            end
+          end
+          expected += 1 if isMatch
+        end
+
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'family' =&gt; search_string
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal expected, reply.resource.total, 'The server did not report the correct number of results.'
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search patient resource on partial family surname</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se04_search_patient_resource_on_given_name_test" id="SE04">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         search_string = @patient.name[0].given[0]
+        search_regex = Regexp.new(search_string)
+        # how many patients in the bundle have matching names?
+        expected = 0
+        @entries.each do |entry|
+          patient = entry.resource
+          isMatch = false
+          if !patient.nil? &amp;&amp; !patient.name.nil?
+            patient.name.each do |name|
+              if !name.given.nil?
+                name.given.each do |given|
+                  if !(given =~ search_regex).nil?
+                    isMatch = true
+                  end
+                end
+              end
+            end
+          end
+          expected += 1 if isMatch
+        end
+
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'given' =&gt; search_string
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal expected, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search patient resource on given name</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.0_search_condition_by_subject_reference_url_test" id="SE05.0">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        patient_url = @client.resource_url(options)
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject' =&gt; patient_url
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject reference url</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.1_search_condition_by_subject_reference_id_test" id="SE05.1">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        patient_id = @entries[0].resource.xmlId
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject' =&gt; patient_id
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject reference id</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.2_search_condition_by_subject:patient_reference_url_test" id="SE05.2">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        patient_url = @client.resource_url(options)
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject:Patient' =&gt; patient_url
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject:Patient reference url</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.3_search_condition_by_subject:patient_reference_id_test" id="SE05.3">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        patient_id = @entries[0].resource.xmlId
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject:Patient' =&gt; patient_id
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject:Patient reference id</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.4_search_condition_by_subject:_id_reference_test" id="SE05.4">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        patient_id = @entries[0].resource.xmlId
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject._id' =&gt; patient_id
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject:_id reference</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.5_search_condition_by_subject:name_reference_test" id="SE05.5">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @entries[0].resource
+        patient_name = patient.name[0].family[0]
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject.name' =&gt; patient_name
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject:name reference</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se05.6_search_condition_by_subject:identifier_reference_test" id="SE05.6">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @patient
+        patient_identifier = @patient.identifier[0].value
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'subject.identifier' =&gt; patient_identifier
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal 1, reply.resource.total, 'The server did not report the correct number of results.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by subject:identifier reference</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se06_search_condition_by__include_test" id="SE06">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # pick some search parameters... we previously created
+        # a condition for the first (0-index) patient in the setup method.
+        patient = @patient
+        patient_identifier = patient.identifier[0].value
+
+        # next, we're going execute a series of searches for conditions referencing the patient
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '_include' =&gt; 'Condition.subject'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Condition, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert reply.resource.total &gt; 0, 'The server should have Conditions with _include=Condition.subject.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search condition by _include</context>
+    <assertion>Asserts False: The server should have Conditions with _include=Condition.subject.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se21_search_for_quantity_(in_observation)_-_precision_tests_test" id="SE21">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'value' =&gt; '4.1234||mmol'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Observation, options)
+        has_obs_a = has_obs_b = has_obs_c = false
+        while reply != nil
+          assert_response_ok(reply)
+          assert_bundle_response(reply)
+          has_obs_a = true if reply.resource.get_by_id(@obs_a)
+          has_obs_b = true if reply.resource.get_by_id(@obs_b)
+          has_obs_c = true if reply.resource.get_by_id(@obs_c)
+          reply = @client.next_page(reply)
+        end
+
+        assert has_obs_a,  'Search on quantity value 4.1234 should return 4.12345'                
+        assert !has_obs_b, 'Search on quantity value 4.1234 should not return 4.12346'                
+        assert !has_obs_c, 'Search on quantity value 4.1234 should not return 4.12349'                
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search for quantity (in observation) - precision tests</context>
+    <assertion>Asserts False: Search on quantity value 4.1234 should not return 4.12346
+Asserts False: Search on quantity value 4.1234 should not return 4.12349</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se22_search_for_quantity_(in_observation)_-_operators_test" id="SE22">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'value' =&gt; '&gt;5||mmol'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Observation, options)
+        has_obs_a = has_obs_b = has_obs_c = false
+        while reply != nil
+          assert_response_ok(reply)
+          assert_bundle_response(reply)
+          has_obs_a = true if reply.resource.get_by_id(@obs_a)
+          has_obs_d = true if reply.resource.get_by_id(@obs_d)
+          has_obs_e = true if reply.resource.get_by_id(@obs_e)
+          reply = @client.next_page(reply)
+        end
+
+        assert !has_obs_a,  'Search greater than quantity should not return lesser value.'                
+        assert has_obs_d, 'Search greater than quantity should return greater value.'                
+        assert has_obs_e, 'Search greater than quantity should return greater value.'                
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search for quantity (in observation) - operators</context>
+    <assertion>Asserts False: Search greater than quantity should return greater value.
+Asserts False: Search greater than quantity should return greater value.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se23_search_with_quantifier_:missing,_on_patient.gender_test" id="SE23">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         # how many patients in the bundle have no gender?
+        expected = 0
+        @entries.each do |entry|
+          patient = entry.resource
+          expected += 1 if !patient.nil? &amp;&amp; patient.gender.nil?
+        end
+
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'gender:missing' =&gt; true
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert_equal expected, reply.resource.total, 'The server did not report the correct number of results.'
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search with quantifier :missing, on Patient.gender</context>
+    <assertion>Asserts False: The server did not report the correct number of results.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se24_search_with_non-existing_parameter._test" id="SE24">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'bonkers' =&gt; 'foobar'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        outcome = parse_operation_outcome(reply.response.body)
+        assert !outcome.nil?, 'Searching with non-existing parameters should result in OperationOutcome.'        
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search with non-existing parameter.</context>
+    <assertion>Asserts False: Searching with non-existing parameters should result in OperationOutcome.</assertion>
+  </test>
+  <test name="SprinklerSearchTest::se25_search_with_malformed_parameters._test" id="SE25">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient
+        @patient.gender = nil
+
+        @create_date = Time.now.utc
+
+        @version = []
+        result = @client.create(@patient)
+        @id = result.id
+        @version &lt;&lt; result.version
+
+        @patient.telecom &lt;&lt; FHIR::ContactPoint.new(system: 'email', value: 'foo@example.com')
+
+        update_result = @client.update(@patient, @id)
+        @version &lt;&lt; update_result.version
+
+        reply = @client.read_feed(FHIR::Patient)
+        @total_count = 0
+        @entries = []
+
+        while reply != nil
+          @total_count += reply.resource.entry.size
+          @entries += reply.resource.entry
+          reply = @client.next_page(reply)
+        end
+
+        # create a condition matching the first patient
+        @condition = ResourceGenerator.generate(FHIR::Condition,1)
+        @condition.subject.xmlId = @entries[0].resource.xmlId
+        options = {
+          :id =&gt; @entries[0].resource.xmlId,
+          :resource =&gt; @entries[0].resource.class
+        } 
+        @condition.subject.reference = @client.resource_url(options)
+        reply = @client.create(@condition)
+        @condition_id = reply.id
+
+        # create some observations
+        @obs_a = create_observation(4.12345)
+        @obs_b = create_observation(4.12346)
+        @obs_c = create_observation(4.12349)
+        @obs_d = create_observation(5.12)
+        @obs_e = create_observation(6.12)
+
+         options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              '...' =&gt; 'foobar'
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        outcome = parse_operation_outcome(reply.response.body)
+        assert !outcome.nil?, 'Searching with non-existing parameters should result in OperationOutcome.'
+ 
+        @client.destroy(FHIR::Patient, @id)
+        @client.destroy(FHIR::Condition, @condition_id)
+        @client.destroy(FHIR::Observation, @obs_a)
+        @client.destroy(FHIR::Observation, @obs_b)
+        @client.destroy(FHIR::Observation, @obs_c)
+        @client.destroy(FHIR::Observation, @obs_d)
+        @client.destroy(FHIR::Observation, @obs_e)</code>
+    <context>Search with malformed parameters.</context>
+    <assertion>Asserts False: Searching with non-existing parameters should result in OperationOutcome.</assertion>
+  </test>
+</xs:schema>

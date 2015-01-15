@@ -1,0 +1,291 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="TrackOneTest">
+    <title:TrackOneTest/>
+    <starting-test>TrackOneTest:base_test</starting-test>
+  </suite>
+  <test name="TrackOneTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>TrackOneTest::c8t1_1a_register_a_new_patient_test</call-test>
+      <call-test>TrackOneTest::c8t1_1b_register_a_new_patient_-_bonus:_extensions_test</call-test>
+      <call-test>TrackOneTest::c8t1_2a_update_a_patient_test</call-test>
+      <call-test>TrackOneTest::c8t1_2b_update_a_patient_-_bonus:_unmodified_extensions_test</call-test>
+      <call-test>TrackOneTest::c8t1_2c_update_a_patient_-_bonus:_modified_extensions_test</call-test>
+      <call-test>TrackOneTest::c8t1_3_retrieve_patient_history_test</call-test>
+      <call-test>TrackOneTest::c8t1_4_search_patient_resource_on_given_name_test</call-test>
+    </code>
+  </test>
+  <test name="TrackOneTest::c8t1_1a_register_a_new_patient_test" id="C8T1_1A">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#create'
+          requires resource: 'Patient', methods: ['create']
+          validates resource: 'Patient', methods: ['create']
+        }
+
+        reply = @client.create @patient
+        @patient_id = reply.id
+
+        assert_response_ok(reply)
+
+        if !reply.resource.nil?
+          temp = reply.resource.xmlId
+          reply.resource.xmlId = nil
+          warning { assert @patient.equals?(reply.resource), 'The server did not correctly preserve the Patient data.' }
+          reply.resource.xmlId = temp
+        end
+        
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Register a new patient</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#create</link>
+    <assertion>Validates the CREATE methods on Patient
+Requires the CREATE methods on Patient
+Asserts False: The server did not correctly preserve the Patient data.</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_1b_register_a_new_patient_-_bonus:_extensions_test" id="C8T1_1B">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#create'
+          requires resource: 'Patient', methods: ['create']
+          validates resource: 'Patient', methods: ['create']
+        }
+
+        reply = @client.create @patient_us
+        @patient_us_id = reply.id
+
+        assert_response_ok(reply)
+
+        if !reply.resource.nil?
+          temp = reply.resource.xmlId
+          reply.resource.xmlId = nil
+          warning { assert @patient.equals?(reply.resource), 'The server did not correctly preserve the Patient data.' }
+          reply.resource.xmlId = temp
+        end
+
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Register a new patient - BONUS: Extensions</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#create</link>
+    <assertion>Validates the CREATE methods on Patient
+Requires the CREATE methods on Patient
+Asserts False: The server did not correctly preserve the Patient data.</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_2a_update_a_patient_test" id="C8T1_2A">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#update'
+          requires resource: 'Patient', methods: ['create', 'update']
+          validates resource: 'Patient', methods: ['update']
+        }
+        
+        @patient.telecom[0].value='1-800-TOLL-FREE'
+        @patient.name[0].given = ["Crocodile","Pants"]
+
+        reply = @client.update @patient, @patient_id
+
+        assert_response_ok(reply)
+
+        if !reply.resource.nil?
+          temp = reply.resource.xmlId
+          reply.resource.xmlId = nil
+          warning { assert @patient.equals?(reply.resource), 'The server did not correctly preserve the Patient data.' }
+          reply.resource.xmlId = temp
+        end
+
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Update a patient</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#update</link>
+    <assertion>Validates the UPDATE methods on Patient
+Requires the CREATE,UPDATE methods on Patient
+Asserts False: The server did not correctly preserve the Patient data.</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_2b_update_a_patient_-_bonus:_unmodified_extensions_test" id="C8T1_2B">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#update'
+          requires resource: 'Patient', methods: ['create','update']
+          validates resource: 'Patient', methods: ['update']
+        }
+        
+        @patient_us.telecom[0].value='1-800-TOLL-FREE'
+        @patient_us.name[0].given = ["Alligator","Pants"]
+
+        reply = @client.update @patient_us, @patient_us_id
+
+        assert_response_ok(reply)
+
+        if !reply.resource.nil?
+          temp = reply.resource.xmlId
+          reply.resource.xmlId = nil
+          warning { assert @patient.equals?(reply.resource), 'The server did not correctly preserve the Patient data.' }
+          reply.resource.xmlId = temp
+        end
+
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Update a patient - BONUS: Unmodified Extensions</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#update</link>
+    <assertion>Validates the UPDATE methods on Patient
+Requires the CREATE,UPDATE methods on Patient
+Asserts False: The server did not correctly preserve the Patient data.</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_2c_update_a_patient_-_bonus:_modified_extensions_test" id="C8T1_2C">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/http.html#update'
+          requires resource: 'Patient', methods: ['create','update']
+          validates resource: 'Patient', methods: ['update']
+        }
+
+        @patient_us.extensions[0].value.coding[0].code = '1569-3'
+        @patient_us.extensions[1].value.coding[0].code = '2186-5'
+
+        reply = @client.update @patient_us, @patient_us_id
+
+        assert_response_ok(reply)
+
+        if !reply.resource.nil?
+          temp = reply.resource.xmlId
+          reply.resource.xmlId = nil
+          warning { assert @patient.equals?(reply.resource), 'The server did not correctly preserve the Patient data.' }
+          reply.resource.xmlId = temp
+        end
+
+        warning { assert_valid_resource_content_type_present(reply) }
+        warning { assert_last_modified_present(reply) }
+        warning { assert_valid_content_location_present(reply) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Update a patient - BONUS: Modified Extensions</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/http.html#update</link>
+    <assertion>Validates the UPDATE methods on Patient
+Requires the CREATE,UPDATE methods on Patient
+Asserts False: The server did not correctly preserve the Patient data.</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_3_retrieve_patient_history_test" id="C8T1_3">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://www.hl7.org/implement/standards/FHIR-Develop/http.html#history'
+          requires resource: 'Patient', methods: ['create', 'update']
+          validates resource: 'Patient', methods: ['history-instance']
+        }
+
+        result = @client.resource_instance_history(FHIR::Patient,@patient_id)
+        assert_response_ok result
+        assert_equal 2, result.resource.total, 'The number of returned versions is not correct'
+        warning { assert_equal 'history', result.resource.fhirType, 'The bundle does not have the correct type: history' }
+        warning { check_sort_order(result.resource.entry) }
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Retrieve Patient History</context>
+    <link>http://www.hl7.org/implement/standards/FHIR-Develop/http.html#history</link>
+    <assertion>Validates the HISTORY-INSTANCE methods on Patient
+Requires the CREATE,UPDATE methods on Patient
+Asserts False: The number of returned versions is not correct
+Asserts False: The bundle does not have the correct type: history</assertion>
+  </test>
+  <test name="TrackOneTest::c8t1_4_search_patient_resource_on_given_name_test" id="C8T1_4">
+    <code>@resources = Crucible::Generator::Resources.new
+
+        @patient = @resources.example_patient
+        @patient.identifier = nil # clear the identifier, in case the server checks for duplicates
+
+        @patient_us = @resources.example_patient_us
+        @patient_us.xmlId = nil # clear the identifier, in case the server checks for duplicates
+
+         metadata {
+          links 'http://www.hl7.org/implement/standards/FHIR-Develop/http.html#search'
+          links 'http://hl7.org/implement/standards/FHIR-Develop/search.html'
+          requires resource: 'Patient', methods: ['create']
+          validates resource: 'Patient', methods: ['search']
+        }
+
+        search_string = @patient.name[0].given[0]
+        search_regex = Regexp.new(search_string)
+
+        options = {
+          :search =&gt; {
+            :flag =&gt; true,
+            :compartment =&gt; nil,
+            :parameters =&gt; {
+              'given' =&gt; search_string
+            }
+          }
+        }
+        reply = @client.search(FHIR::Patient, options)
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+        assert (reply.resource.total &gt; 0), 'The server did not report any results.'        
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Patient, @patient_us_id) if !@patient_us_id.nil?</code>
+    <context>Search patient resource on given name</context>
+    <link>http://www.hl7.org/implement/standards/FHIR-Develop/http.html#search</link>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/search.html</link>
+    <assertion>Validates the SEARCH methods on Patient
+Requires the CREATE methods on Patient
+Asserts False: The server did not report any results.</assertion>
+  </test>
+</xs:schema>

@@ -1,0 +1,325 @@
+<xs:schema xmlns:ctl="http://www.occamlab.com/ctl">
+  <suite name="TrackTwoTest">
+    <title:TrackTwoTest/>
+    <starting-test>TrackTwoTest:base_test</starting-test>
+  </suite>
+  <test name="TrackTwoTest::base_test">
+    <assertion>base main</assertion>
+    <code>
+      <call-test>TrackTwoTest::c8t2_1a_fetch_all_patient_records_test</call-test>
+      <call-test>TrackTwoTest::c8t2_1b_fetch_all_patient_records_with_[start,_end]_test</call-test>
+      <call-test>TrackTwoTest::c8t2_2a_fetch_specific_patient_record_test</call-test>
+      <call-test>TrackTwoTest::c8t2_2b_fetch_specific_patient_record_with_[start,_end]_test</call-test>
+      <call-test>TrackTwoTest::c8t2_2c_fetch_specific_patient_record_-_bonus:_update_test</call-test>
+      <call-test>TrackTwoTest::c8t2_3_write_and_then_fetch_an_entire_patient_record_test</call-test>
+    </code>
+  </test>
+  <test name="TrackTwoTest::c8t2_1a_fetch_all_patient_records_test" id="C8T2_1A">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29'
+          validates resource: 'Patient', methods: ['$everything']
+        }
+
+        reply = @client.fetch_patient_record
+
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Fetch all patient records</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29</link>
+    <assertion>Validates the $EVERYTHING methods on Patient</assertion>
+  </test>
+  <test name="TrackTwoTest::c8t2_1b_fetch_all_patient_records_with_[start,_end]_test" id="C8T2_1B">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29'
+          validates resource: 'Patient', methods: ['$everything']
+        }
+
+        reply = @client.fetch_patient_record(nil, "2012-01-01", "2012-12-31")
+
+        assert_response_ok(reply)
+        assert_bundle_response(reply)
+
+        skip # TODO: Determine how start/end scope all patient records (e.g., birthdate?)
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Fetch all patient records with [start, end]</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29</link>
+    <assertion>Validates the $EVERYTHING methods on Patient</assertion>
+  </test>
+  <test name="TrackTwoTest::c8t2_2a_fetch_specific_patient_record_test" id="C8T2_2A">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29'
+          requires resource: 'Patient', methods: ['create']
+          validates resource: 'Patient', methods: ['$everything']
+        }
+
+        reply = @client.create @patient
+        @patient_id = reply.id
+
+        assert_response_ok(reply)
+
+        record = @client.fetch_patient_record(@patient_id)
+
+        assert_response_ok(record)
+        assert_bundle_response(record)
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Fetch specific patient record</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29</link>
+    <assertion>Validates the $EVERYTHING methods on Patient
+Requires the CREATE methods on Patient</assertion>
+  </test>
+  <test name="TrackTwoTest::c8t2_2b_fetch_specific_patient_record_with_[start,_end]_test" id="C8T2_2B">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29'
+          requires resource: 'Patient', methods: ['create']
+          validates resource: 'Patient', methods: ['$everything']
+        }
+
+        reply = @client.create @patient
+        @patient_id = reply.id
+        @pat_reply = reply
+
+        assert_response_ok(reply)
+
+        record = @client.fetch_patient_record(@patient_id, "2012-01-01", "2012-12-31")
+
+        assert_response_ok(record)
+        assert_bundle_response(record)
+
+        skip # TODO: Determine how start/end scope a specific patient record (e.g., birthdate?)
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Fetch specific patient record with [start, end]</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29</link>
+    <assertion>Validates the $EVERYTHING methods on Patient
+Requires the CREATE methods on Patient</assertion>
+  </test>
+  <test name="TrackTwoTest::c8t2_2c_fetch_specific_patient_record_-_bonus:_update_test" id="C8T2_2C">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29'
+          requires resource: 'Patient', methods: ['create', 'update']
+          validates resource: 'Patient', methods: ['update', '$everything']
+        }
+
+        record = @client.fetch_patient_record(@patient_id)
+
+        assert_response_ok(record)
+        assert_bundle_response(record)
+
+        @patient.telecom[0].value='1-234-567-8901'
+        @patient.name[0].given = ["Not", "Given"]
+
+        reply = @client.update @patient, @patient_id
+
+        assert_response_ok(reply)
+
+        record = @client.fetch_patient_record(@patient_id)
+
+        assert_response_ok(record)
+        assert_bundle_response(record)
+        assert record.resource.entry[0].resource.telecom[0].value == '1-234-567-8901'
+        assert record.resource.entry[0].resource.name[0].given == ['Not', 'Given']
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Fetch specific patient record - BONUS: Update</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://wiki.hl7.org/index.php?title=FHIR_Connectathon_8#2._Expose_the_.27Fetch_Patient_Record.27_operation_.28Server.29</link>
+    <assertion>Validates the UPDATE,$EVERYTHING methods on Patient
+Requires the CREATE,UPDATE methods on Patient
+Asserts False: Given</assertion>
+  </test>
+  <test name="TrackTwoTest::c8t2_3_write_and_then_fetch_an_entire_patient_record_test" id="C8T2_3">
+    <code>@resources = Crucible::Generator::Resources.new
+        @patient = @resources.example_patient_record_201
+        @condition_1 = @resources.example_patient_record_condition_201
+        @condition_2 = @resources.example_patient_record_condition_205
+        @diagnosticreport = @resources.example_patient_record_diagnosticreport_201
+        @encounter_1 = @resources.example_patient_record_encounter_201
+        @encounter_2 = @resources.example_patient_record_encounter_202
+        @observation = @resources.example_patient_record_observation_202
+        @organization_1 = @resources.example_patient_record_organization_201
+        @organization_2 = @resources.example_patient_record_organization_203
+        @practitioner = @resources.example_patient_record_practitioner_201
+        @procedure = @resources.example_patient_record_procedure_201
+
+         metadata {
+          links 'http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything'
+          links 'http://hl7.org/implement/standards/FHIR-Develop/argonauts.html'
+          requires resource: 'Organization', methods: ['create']
+          requires resource: 'Practitioner', methods: ['create']
+          requires resource: 'Patient', methods: ['create']
+          requires resource: 'Condition', methods: ['create']
+          requires resource: 'Observation', methods: ['create']
+          requires resource: 'DiagnosticReport', methods: ['create']
+          requires resource: 'Encounter', methods: ['create']
+          requires resource: 'Procedure', methods: ['create']
+          validates resource: 'Patient', methods: ['$everything']
+        }
+
+        create_patient_record
+
+        record = @client.fetch_patient_record(@pat_reply.id)
+
+        assert_response_ok(record)
+        assert_bundle_response(record)
+
+        skip # TODO: Validate returned result against each example record after determining returned order
+ 
+        @client.destroy(FHIR::Patient, @patient_id) if !@patient_id.nil?
+        @client.destroy(FHIR::Organization, @org1_reply.id) if !@org1_id.nil?
+        @client.destroy(FHIR::Organization, @org2_reply.id) if !@org2_id.nil?
+        @client.destroy(FHIR::Practitioner, @prac_reply.id) if !@prac_id.nil?
+        @client.destroy(FHIR::Patient, @pat_reply.id) if !@pat_id.nil?
+        @client.destroy(FHIR::Condition, @cond2_reply.id) if !@cond2_id.nil?
+        @client.destroy(FHIR::Observation, @obs_reply.id) if !@obs_id.nil?
+        @client.destroy(FHIR::DiagnosticReport, @dr_reply.id) if !@dr_id.nil?
+        @client.destroy(FHIR::Encounter, @enc1_reply.id) if !@enc1_id.nil?
+        @client.destroy(FHIR::Encounter, @enc2_reply.id) if !@enc2_id.nil?
+        @client.destroy(FHIR::Procedure, @prc_reply.id) if !@prc_id.nil?
+        @client.destroy(FHIR::Condition, @cond1_reply.id) if !@cond1_id.nil?</code>
+    <context>Write and then fetch an entire patient record</context>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/patient-operations.html#everything</link>
+    <link>http://hl7.org/implement/standards/FHIR-Develop/argonauts.html</link>
+    <assertion>Validates the $EVERYTHING methods on Patient
+Requires the CREATE methods on Organization
+Requires the CREATE methods on Practitioner
+Requires the CREATE methods on Patient
+Requires the CREATE methods on Condition
+Requires the CREATE methods on Observation
+Requires the CREATE methods on DiagnosticReport
+Requires the CREATE methods on Encounter
+Requires the CREATE methods on Procedure</assertion>
+  </test>
+</xs:schema>
